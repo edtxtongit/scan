@@ -77,7 +77,7 @@ for prefix in "${PREFIXES[@]}"; do
   echo "Scanning ${prefix} ..."
   # run nmap and extract IPs according to your original pipeline
   # keep it simple and append directly to SCAN_OUT; tolerate failures
-  nmap -p 8008 -n --open "$prefix" 2>/dev/null \
+  nmap --sS -Pn -p 8008 -n --open "$prefix" 2>/dev/null \
     | grep "Nmap scan report for"\
     | awk '{print $5}' \
     >> "$SCAN_OUT" || true
@@ -141,3 +141,4 @@ while IFS= read -r line || [[ -n "$line" ]]; do
 done < "$SCAN_OUT"
 
 printf 'All done. Scanned IPs in %s ; matched in %s\n' "$SCAN_OUT" "$RESULT_OUT"
+
