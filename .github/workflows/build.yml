@@ -29,6 +29,7 @@ jobs:
       - name: Build static binary (Linux amd64)
         run: |
           mkdir -p build
+          go env -w GO111MODULE=off
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o build/app main.go
 
       - name: Verify binary
