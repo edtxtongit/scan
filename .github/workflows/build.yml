@@ -1,0 +1,36 @@
+name: Build Go Binary
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # 手动触发
+
+jobs:
+  build:
+    name: Build Go Executables
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'  # 你项目的 Go 版本
+
+      - name: Build binaries for multiple platforms
+        run: |
+          mkdir -p build
+          GOOS=linux GOARCH=amd64 go build -o build/combined_scan_and_check-linux-amd64 main.go
+          GOOS=windows GOARCH=amd64 go build -o build/combined_scan_and_check-windows-amd64.exe main.go
+          GOOS=darwin GOARCH=amd64 go build -o build/combined_scan_and_check-macos-amd64 main.go
+          ls -lh build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: build/
