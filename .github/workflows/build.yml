@@ -1,44 +1,41 @@
-name: Go Auto Build
+name: Build Go binary
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ 拉取仓库
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      # 2️⃣ 设置 Go 环境
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
 
-      # 3️⃣ 如果没有 go.mod，就自动生成
-      - name: Create go.mod if missing
+      - name: Prepare go.mod
         run: |
-          if [ ! -f go.mod ]; then
-            echo "go.mod not found, creating one..."
-            go mod init auto/module
-            go mod tidy
-          fi
+          cat << 'EOF' > go.mod
+          module scan
 
-      # 4️⃣ 构建输出文件
-      - name: Build binary
+          go 1.22
+          EOF
+
+      - name: Build static binary (Linux amd64)
         run: |
           mkdir -p build
-          go build -o build/app go.go
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o build/app main.go
 
-      # 5️⃣ 上传编译结果（可下载）
-      - name: Upload build artifact
+      - name: Verify binary
+        run: file build/app
+
+      - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
-          name: go-binary
+          name: scan-linux-amd64
           path: build/app
