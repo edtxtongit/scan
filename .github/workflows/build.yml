@@ -1,36 +1,44 @@
-name: Build Go Binary
+name: Go Auto Build
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:  # 手动触发
+    branches: [ "main" ]
 
 jobs:
   build:
-    name: Build Go Executables
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      # 1️⃣ 拉取仓库
+      - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2️⃣ 设置 Go 环境
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'  # 你项目的 Go 版本
+          go-version: '1.22'
 
-      - name: Build binaries for multiple platforms
+      # 3️⃣ 如果没有 go.mod，就自动生成
+      - name: Create go.mod if missing
+        run: |
+          if [ ! -f go.mod ]; then
+            echo "go.mod not found, creating one..."
+            go mod init auto/module
+            go mod tidy
+          fi
+
+      # 4️⃣ 构建输出文件
+      - name: Build binary
         run: |
           mkdir -p build
-          GOOS=linux GOARCH=amd64 go build -o build/combined_scan_and_check-linux-amd64 main.go
-          GOOS=windows GOARCH=amd64 go build -o build/combined_scan_and_check-windows-amd64.exe main.go
-          GOOS=darwin GOARCH=amd64 go build -o build/combined_scan_and_check-macos-amd64 main.go
-          ls -lh build
+          go build -o build/app go.go
 
-      - name: Upload build artifacts
+      # 5️⃣ 上传编译结果（可下载）
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: binaries
-          path: build/
+          name: go-binary
+          path: build/app
