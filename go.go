@@ -130,23 +130,23 @@ func ensureFileExists(path string) error {
 }
 
 func runNmap(prefix string) ([]string, error) {
-	// nmap --sS -Pn -p 8008 -n --open <prefix>
 	cmd := exec.Command("nmap", "--sS", "-Pn", "-p", "8008", "-n", "--open", prefix)
-	// capture stdout
-	out, err := cmd.Output()
+
+	// 捕获 stdout + stderr
+	out, err := cmd.CombinedOutput()
+
 	if err != nil {
-		// we tolerate errors (like timeouts), but return what we have
-		// if Output returned an ExitError we can still parse stdout from it:
+		// 容忍错误（比如 nmap 部分主机超时）
 		if ee, ok := err.(*exec.ExitError); ok {
-			out = ee.Stdout
-			// continue
+			fmt.Fprintf(os.Stderr, "nmap exited with code %d for %s (continuing)\n", ee.ExitCode(), prefix)
 		} else {
-			// return error but allow caller to decide (script used "|| true")
 			return extractIPsFromNmapOutput(out), fmt.Errorf("nmap error: %w", err)
 		}
 	}
+
 	return extractIPsFromNmapOutput(out), nil
 }
+
 
 func isIPv4(s string) bool {
 	return net.ParseIP(s) != nil
