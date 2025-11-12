@@ -1,42 +1,25 @@
-name: Build Go binary
+name: Build Go app (static)
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
+  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Go
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
 
-      - name: Prepare go.mod
-        run: |
-          cat << 'EOF' > go.mod
-          module scan
-
-          go 1.22
-          EOF
-
-      - name: Build static binary (Linux amd64)
+      - name: Build static binary (no go.mod)
         run: |
           mkdir -p build
           go env -w GO111MODULE=off
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o build/app main.go
-
-      - name: Verify binary
-        run: file build/app
-
-      - name: Upload binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: scan-linux-amd64
-          path: build/app
+          CGO_ENABLED=0 go build -ldflags="-s -w" -o build/app go.go
